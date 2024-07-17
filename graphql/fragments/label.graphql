@@ -1,0 +1,10 @@
+fragment DetailLabel on Label {
+  id
+  instance
+  name
+  features {
+    id
+    key
+    value
+  }
+}

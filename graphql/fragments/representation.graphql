@@ -1,0 +1,118 @@
+fragment MultiScaleRepresentation on Representation {
+  derived(tags: ["multiscale"]) {
+    name
+    tags
+    meta
+    store
+  }
+}
+
+fragment Representation on Representation {
+  sample {
+    id
+    name
+  }
+  id
+  store
+  variety
+  name
+  omero {
+    scale
+  }
+}
+
+fragment DetailRepresentation on Representation {
+  sample {
+    id
+    name
+  }
+  id
+  store
+  shape
+  variety
+  name
+  omero {
+    physicalSize {
+      x
+      y
+      z
+    }
+    positions {
+      name
+      id
+      x
+      y
+      z
+      stage {
+        name
+        id
+      }
+    }
+    timepoints {
+      name
+      id
+      era {
+        name
+        id
+      }
+    }
+    views {
+      channel {
+        name
+        id
+      }
+      position {
+        name
+        id
+        x
+        y
+        z
+      }
+      timepoint {
+        id
+      }
+    }
+  }
+  metrics(flatten: 3) {
+    id
+    key
+    value
+    representation {
+      id
+    }
+  }
+  derived(flatten: 3) {
+    id
+    name
+    store
+  }
+}
+
+fragment RepresentationAndMask on Representation {
+  sample {
+    id
+    name
+  }
+  id
+  store
+  variety
+  name
+  derived(variety: MASK) {
+    id
+    store
+    variety
+    name
+  }
+  omero {
+    scale
+  }
+}
+
+fragment ListRepresentation on Representation {
+  id
+  name
+  sample {
+    id
+    name
+  }
+}

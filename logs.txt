@@ -1,0 +1,168 @@
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+[Errno 2] No such file or directory: 'bergen.yaml'
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 432, in aprovide
+    await self.connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/base.py", line 106, in connect
+    self.transport = WebsocketTransport(broadcast=self.broadcast, route="agent")
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/transport/websocket.py", line 40, in __init__
+    self.config = config or WebsocketTransportConfig.from_file("bergen.yaml", **kwargs)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/config/base.py", line 65, in from_file
+    return cls(**overrides)
+  File "pydantic/env_settings.py", line 37, in pydantic.env_settings.BaseSettings.__init__
+  File "pydantic/env_settings.py", line 63, in pydantic.env_settings.BaseSettings._build_values
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/config/base.py", line 20, in yaml_config_settings_source
+    with open(file_path,"r") as file:
+FileNotFoundError: [Errno 2] No such file or directory: 'bergen.yaml'
+Task exception was never retrieved
+future: <Task finished name='Task-4' coro=<QtAgent.aprovide() done, defined at /home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py:427> exception=FileNotFoundError(2, 'No such file or directory')>
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 468, in aprovide
+    raise e
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 432, in aprovide
+    await self.connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/base.py", line 106, in connect
+    self.transport = WebsocketTransport(broadcast=self.broadcast, route="agent")
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/transport/websocket.py", line 40, in __init__
+    self.config = config or WebsocketTransportConfig.from_file("bergen.yaml", **kwargs)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/config/base.py", line 65, in from_file
+    return cls(**overrides)
+  File "pydantic/env_settings.py", line 37, in pydantic.env_settings.BaseSettings.__init__
+  File "pydantic/env_settings.py", line 63, in pydantic.env_settings.BaseSettings._build_values
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/config/base.py", line 20, in yaml_config_settings_source
+    with open(file_path,"r") as file:
+FileNotFoundError: [Errno 2] No such file or directory: 'bergen.yaml'
+Exception in callback None()
+handle: <Handle>
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/asyncio/events.py", line 81, in _run
+    self._context.run(self._callback, *self._args)
+TypeError: 'NoneType' object is not callable
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+QOpenGLWidget: Failed to make context current
+Exception in callback None()
+handle: <Handle>
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/asyncio/events.py", line 81, in _run
+    self._context.run(self._callback, *self._args)
+TypeError: 'NoneType' object is not callable
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+Ward is not reachable
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 969, in _wrap_create_connection
+    return await self._loop.create_connection(*args, **kwargs)  # type: ignore  # noqa
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 1025, in create_connection
+    raise exceptions[0]
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 1010, in create_connection
+    sock = await self._connect_sock(
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 924, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "/usr/lib/python3.8/asyncio/selector_events.py", line 496, in sock_connect
+    return await fut
+  File "/usr/lib/python3.8/asyncio/selector_events.py", line 528, in _sock_connect_cb
+    raise OSError(err, f'Connect call failed {address}')
+ConnectionRefusedError: [Errno 111] Connect call failed ('10.144.196.43', 8090)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/graphql.py", line 100, in run
+    async with self.async_session.post(self.endpoint, json={"query": gql.query, "variables": variables}) as resp:
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/client.py", line 1117, in __aenter__
+    self._resp = await self._coro
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/client.py", line 520, in _request
+    conn = await self._connector.connect(
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 535, in connect
+    proto = await self._create_connection(req, traces, timeout)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 892, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 1051, in _create_direct_connection
+    raise last_exc
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 1020, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 975, in _wrap_create_connection
+    raise client_error(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host p-tnagerl-lab1:8090 ssl:default [Connect call failed ('10.144.196.43', 8090)]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 432, in aprovide
+    await self.connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/base.py", line 97, in connect
+    await self.ward._connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/base.py", line 119, in _connect
+    self.transcript = await self.negotiate()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/ward.py", line 29, in negotiate
+    transcript_query = await self.run(ParsedQuery("""mutation Negotiate {
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/graphql.py", line 123, in run
+    raise GraphQLProtocolException("Ward is not reachable") from e
+herre.wards.graphql.GraphQLProtocolException: Ward is not reachable
+Task exception was never retrieved
+future: <Task finished name='Task-4' coro=<QtAgent.aprovide() done, defined at /home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py:427> exception=GraphQLProtocolException('Ward is not reachable')>
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 969, in _wrap_create_connection
+    return await self._loop.create_connection(*args, **kwargs)  # type: ignore  # noqa
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 1025, in create_connection
+    raise exceptions[0]
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 1010, in create_connection
+    sock = await self._connect_sock(
+  File "/usr/lib/python3.8/asyncio/base_events.py", line 924, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "/usr/lib/python3.8/asyncio/selector_events.py", line 496, in sock_connect
+    return await fut
+  File "/usr/lib/python3.8/asyncio/selector_events.py", line 528, in _sock_connect_cb
+    raise OSError(err, f'Connect call failed {address}')
+ConnectionRefusedError: [Errno 111] Connect call failed ('10.144.196.43', 8090)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/graphql.py", line 100, in run
+    async with self.async_session.post(self.endpoint, json={"query": gql.query, "variables": variables}) as resp:
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/client.py", line 1117, in __aenter__
+    self._resp = await self._coro
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/client.py", line 520, in _request
+    conn = await self._connector.connect(
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 535, in connect
+    proto = await self._create_connection(req, traces, timeout)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 892, in _create_connection
+    _, proto = await self._create_direct_connection(req, traces, timeout)
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 1051, in _create_direct_connection
+    raise last_exc
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 1020, in _create_direct_connection
+    transp, proto = await self._wrap_create_connection(
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/aiohttp/connector.py", line 975, in _wrap_create_connection
+    raise client_error(req.connection_key, exc) from exc
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host p-tnagerl-lab1:8090 ssl:default [Connect call failed ('10.144.196.43', 8090)]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 468, in aprovide
+    raise e
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/qt.py", line 432, in aprovide
+    await self.connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/agents/base.py", line 97, in connect
+    await self.ward._connect()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/base.py", line 119, in _connect
+    self.transcript = await self.negotiate()
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/arkitekt/ward.py", line 29, in negotiate
+    transcript_query = await self.run(ParsedQuery("""mutation Negotiate {
+  File "/home/jhnnsrs/Code/packages/mikro-napari/venv/lib/python3.8/site-packages/herre/wards/graphql.py", line 123, in run
+    raise GraphQLProtocolException("Ward is not reachable") from e
+herre.wards.graphql.GraphQLProtocolException: Ward is not reachable
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments

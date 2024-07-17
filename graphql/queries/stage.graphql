@@ -1,0 +1,25 @@
+query get_image_stage($id: ID!, $limit: Int) {
+  stage(id: $id) {
+    positions {
+      x
+      y
+      z
+      omeros(order: "-acquired", limit: $limit) {
+        id
+        acquisitionDate
+        representation {
+          id
+          shape
+          store
+        }
+        physicalSize {
+          x
+          y
+          z
+          t
+          c
+        }
+      }
+    }
+  }
+}

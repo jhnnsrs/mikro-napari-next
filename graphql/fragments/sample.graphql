@@ -1,0 +1,11 @@
+fragment MultiScaleSample on Sample {
+  id
+  name
+  representations(tags: ["multiscale"]) {
+    id
+    store
+    derived(ordering: "-meta_multiscale_depth") {
+      store
+    }
+  }
+}

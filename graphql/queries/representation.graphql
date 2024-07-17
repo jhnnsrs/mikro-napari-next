@@ -1,0 +1,29 @@
+query get_multiscale_rep($id: ID!) {
+  representation(id: $id) {
+    ...MultiScaleRepresentation
+  }
+}
+
+query get_representation($id: ID!) {
+  representation(id: $id) {
+    ...Representation
+  }
+}
+
+query get_representation_and_mask($id: ID!) {
+  representation(id: $id) {
+    ...RepresentationAndMask
+  }
+}
+
+query get_some_representations {
+  representations(limit: 10, order: "-created_at") {
+    ...ListRepresentation
+  }
+}
+
+query DetailRep($id: ID!) {
+  representation(id: $id) {
+    ...DetailRepresentation
+  }
+}

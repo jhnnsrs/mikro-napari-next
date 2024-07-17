@@ -1,0 +1,8 @@
+{
+  "items": [
+    "reference/plugin",
+    "reference/run"
+  ],
+  "label": "Reference",
+  "type": "category"
+}

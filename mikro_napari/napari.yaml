@@ -1,0 +1,19 @@
+name: mikro-napari
+display_name: Mikro Napari
+visibility: public
+schema_version: 0.2.0
+contributions:
+  commands:
+    - id: mikro-napari.arkitekt_widget
+      title: Open Arkitekt
+      python_name: mikro_napari.plugin:ArkitektPluginWidget
+    - id: mikro-napari.sidebar_widget
+      title: Open Sidebar
+      python_name: mikro_napari.plugin:ArkitektPluginSidebar
+  widgets:
+    - command: mikro-napari.arkitekt_widget
+      display_name: Arkitekt Widget
+      autogenerate: False
+    - command: mikro-napari.sidebar_widget
+      display_name: Arkitekt Sidebar
+      autogenerate: False
