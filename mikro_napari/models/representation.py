@@ -8,7 +8,21 @@ import numpy as np
 from napari.layers.shapes._shapes_constants import Mode
 from qtpy import QtCore, QtWidgets
 from koil.qt import QtCoro, QtFuture, QtGeneratorRunner, QtRunner, QtSignal
-from mikro_next.api.schema import AffineTransformationView, Image, RoiKind, ROI, Stage, acreate_roi, awatch_rois, adelete_roi, aget_rois, WatchRoisSubscription, FiveDVector, delete_roi, ColorMap
+from mikro_next.api.schema import (
+    AffineTransformationView,
+    Image,
+    RoiKind,
+    ROI,
+    Stage,
+    acreate_roi,
+    awatch_rois,
+    adelete_roi,
+    aget_rois,
+    WatchRoisSubscription,
+    FiveDVector,
+    delete_roi,
+    ColorMap,
+)
 from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
 import vispy.color
 
@@ -28,8 +42,6 @@ DOUBLE_CLICK_MODE_MAP = {
     Mode.ADD_POLYGON: RoiKind.POLYGON,
     Mode.ADD_PATH: RoiKind.PATH,
 }
-
-
 
 
 class AskForRoi(QtWidgets.QWidget):
@@ -206,9 +218,7 @@ class RoiLayer(ManagedLayer):
 
     def watch_rois(self):
         self.is_watching = True
-        self._watch_rois_future = self.watch_rois_subscription.run(
-            image=self.image.id
-        )
+        self._watch_rois_future = self.watch_rois_subscription.run(image=self.image.id)
 
     def update_roi_layer(self):
         self._napari_rois: List[NapariROI] = list(
@@ -219,12 +229,10 @@ class RoiLayer(ManagedLayer):
         )
         self._roi_layer.name = f"ROIs for {self.image.name}"
 
-        
         # Clear the selected data and remove the selected
         # This is hacky as fuck but self._roi_layer.data = [] does not longer work
         self._roi_layer.selected_data = set(range(self._roi_layer.nshapes))
         self._roi_layer.remove_selected()
-        
 
         for i in self._napari_rois:
             print(i)
@@ -273,9 +281,9 @@ class RoiLayer(ManagedLayer):
                 print("Creating")
 
                 vectors = FiveDVector.list_from_numpyarray(
-                        self._roi_layer.data[-1], t=t, z=z, c=c
-                    )
-                
+                    self._roi_layer.data[-1], t=t, z=z, c=c
+                )
+
                 print("The vectors", vectors)
 
                 self.create_rois_runner.run(
@@ -337,7 +345,11 @@ class ImageLayer(ManagedLayer):
 
         contexts = self.managed_image.rgb_contexts
 
-        affinetransformation = [i for i in self.managed_image.views if isinstance(i, AffineTransformationView)]
+        affinetransformation = [
+            i
+            for i in self.managed_image.views
+            if isinstance(i, AffineTransformationView)
+        ]
 
         if affinetransformation:
             affinetransformation = affinetransformation[0]
@@ -348,19 +360,21 @@ class ImageLayer(ManagedLayer):
         else:
             scale = (1, 1, 1)
 
-
         if contexts:
             context = contexts[0]
 
             for view in context.views:
-
                 print(self.managed_image.data)
 
                 if view.color_map == ColorMap.INTENSITY:
-                    colormap = f"Intensity rgba({(',').join([str(i) for i in view.base_color])})", vispy.color.Colormap([[0, 0, 0, 0], [i / 255 for i in view.base_color]])
+                    colormap = (
+                        f"Intensity rgba({(',').join([str(i) for i in view.base_color])})",
+                        vispy.color.Colormap(
+                            [[0, 0, 0, 0], [i / 255 for i in view.base_color]]
+                        ),
+                    )
                 else:
                     colormap = view.color_map
-
 
                 new_layer = self.viewer.add_image(
                     self.managed_image.data.isel(c=view.c_min).transpose(*list("tzyx")),
@@ -373,9 +387,7 @@ class ImageLayer(ManagedLayer):
                     scale=scale,
                 )
 
-                self._image_layers.append(
-                    new_layer
-                )
+                self._image_layers.append(new_layer)
 
         else:
             new_layer = self.viewer.add_image(
@@ -480,7 +492,6 @@ class RepresentationQtModel(QtCore.QObject):
         """
         self.create_image_layer(image)
 
-    
     def tile_images(self, reps: List[Image]):
         """Tile Images on Napari
 
@@ -515,9 +526,7 @@ class RepresentationQtModel(QtCore.QObject):
             scale=reps[0].omero.scale if reps[0].omero else None,
         )
 
-    async def stream_rois(
-        self, rep: Image, show_old_rois=False
-    ) -> ROI:
+    async def stream_rois(self, rep: Image, show_old_rois=False) -> ROI:
         """Stream ROIs
 
         Asks the user to mark rois on the image, once user deams done, the rois are returned
@@ -572,8 +581,6 @@ class RepresentationQtModel(QtCore.QObject):
             except asyncio.CancelledError:
                 print("Cancelled")
                 pass
-
-   
 
     def on_rois_loaded(self, rois: List[ROI]):
         self.roi_state = {roi.id: roi for roi in rois}

@@ -3,6 +3,7 @@ from qtpy import QtWidgets
 from koil.qt import QtRunner
 from mikro_next.api.schema import Image, aget_image
 
+
 class OpenImageDialog(QtWidgets.QDialog):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

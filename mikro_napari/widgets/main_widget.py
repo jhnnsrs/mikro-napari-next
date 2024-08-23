@@ -1,4 +1,3 @@
-
 from koil.qt import QtRunner
 from mikro_next.api.schema import (
     Image,
@@ -13,7 +12,6 @@ from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 from .base import BaseMikroNapariWidget
 import xarray as xr
 from rekuest_next.qt.builders import qtinloopactifier
-
 
 
 class MikroNapariWidget(BaseMikroNapariWidget):
@@ -115,7 +113,6 @@ class MikroNapariWidget(BaseMikroNapariWidget):
             raise Exception("No active layer")
 
         image_layer = self.active_non_mikro_layers[0]
-
 
         if image_layer.ndim == 2:
             if image_layer.rgb:

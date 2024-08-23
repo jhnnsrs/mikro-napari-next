@@ -6,6 +6,7 @@ from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 import os
 from mikro_napari.global_app import get_app_or_build_for_widget
 
+
 def main(**kwargs):
     os.environ["NAPARI_ASYNC"] = "1"
 
@@ -20,8 +21,6 @@ def main(**kwargs):
     viewer.window.add_dock_widget(widget, area="left", name="Mikro Napari")
     viewer.window.add_dock_widget(sidebar, area="right", name="Mikro Sidebar")
     # viewer.add_image(astronaut(), name="astronaut")
-
-
 
     napari.run()
 

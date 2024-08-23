@@ -3,6 +3,7 @@ from napari import Viewer
 from qtpy import QtWidgets
 from mikro_napari.global_app import get_app_or_build_for_widget as get
 
+
 class BaseMikroNapariWidget(QtWidgets.QWidget):
     app: QtApp
     viewer: Viewer

@@ -35,9 +35,6 @@ class RoiWidget(QtWidgets.QWidget):
         self._layout.addWidget(QtWidgets.QLabel(roi.id))
 
 
-
-
-
 class RepresentationWidget(QtWidgets.QWidget):
     """A widget for displaying ROIs."""
 
@@ -65,7 +62,6 @@ class RepresentationWidget(QtWidgets.QWidget):
             self._layout.addWidget(QtWidgets.QLabel(image.name))
 
 
-
 class SidebarWidget(BaseMikroNapariWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
@@ -80,7 +76,6 @@ class SidebarWidget(BaseMikroNapariWidget):
         self.viewer.layers.selection.events.changed.connect(self.on_layer_changed)
 
         self.setLayout(self.mylayout)
-
 
     def replace_widget(self, widget):
         self.mylayout.removeWidget(self._active_widget)
