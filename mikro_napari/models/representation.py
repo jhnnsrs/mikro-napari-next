@@ -1,12 +1,12 @@
 import asyncio
 import math
 from typing import Dict, List
-from arkitekt import App
 import dask.array as da
 import napari
 import numpy as np
 from napari.layers.shapes._shapes_constants import Mode
 from qtpy import QtCore, QtWidgets
+from arkitekt_next.qt.types import QtApp
 from koil.qt import QtCoro, QtFuture, QtGeneratorRunner, QtRunner, QtSignal
 from mikro_next.api.schema import (
     AffineTransformationView,
@@ -35,6 +35,7 @@ DESIGN_MODE_MAP = {
 
 SELECT_MODE_MAP = {
     Mode.DIRECT: "direct",
+    Mode.PAN_ZOOM: "pan_zoom",
 }
 
 
@@ -190,7 +191,13 @@ class RoiLayer(ManagedLayer):
             self._watch_rois_future.cancel()
 
     def show(self, fetch_rois=True, watch_rois=True):
-        self._roi_layer = self.viewer.add_shapes()
+        self._roi_layer = self.viewer.add_shapes(
+            metadata={
+                "mikro": True,
+                "representation": self.image,
+                "type": "ROI",
+            },
+        )
         self._roi_layer.mouse_drag_callbacks.append(self.on_drag_roi_layer)
         self._roi_layer.mouse_double_click_callbacks.append(
             self.on_double_click_roi_layer
@@ -317,6 +324,7 @@ class RoiLayer(ManagedLayer):
 
 class ImageLayer(ManagedLayer):
     on_rep_layer_clicked = QtCore.Signal(Image)
+    add_replayer = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -332,6 +340,11 @@ class ImageLayer(ManagedLayer):
         self.with_rois = with_rois
         self.scale_to_physical_size = scale_to_physical_size
         self.roi_layer = None
+
+        self.add_replayer.connect(self.add_image_layer)
+
+    def add_image_layer(self, layer):
+        self.viewer.add_image(**layer)
 
     def on_destroy(self):
         for layer in self._image_layers:
@@ -360,31 +373,37 @@ class ImageLayer(ManagedLayer):
         else:
             scale = (1, 1, 1)
 
-        if contexts:
+        if contexts and False:
             context = contexts[0]
 
+            data = []
             for view in context.views:
-                print(self.managed_image.data)
+                data.append(
+                    self.managed_image.data.isel(c=view.c_min)
+                    .transpose(*list("tzyx"))
+                    .compute()
+                )
+
+            for item, view in zip(data, context.views):
 
                 if view.color_map == ColorMap.INTENSITY:
-                    colormap = (
-                        f"Intensity rgba({(',').join([str(i) for i in view.base_color])})",
-                        vispy.color.Colormap(
-                            [[0, 0, 0, 0], [i / 255 for i in view.base_color]]
-                        ),
+                    print([[0, 0, 0, 0], [i / 255 for i in view.base_color]])
+                    colormap = vispy.color.Colormap(
+                        [[0, 0, 0, 1], [i / 255 for i in view.base_color]]
                     )
                 else:
-                    colormap = view.color_map
+                    colormap = view.color_map.value.lower()
+                    print(colormap)
 
-                new_layer = self.viewer.add_image(
-                    self.managed_image.data.isel(c=view.c_min).transpose(*list("tzyx")),
-                    metadata={
-                        "mikro": True,
-                        "representation": self.managed_image,
-                        "type": "IMAGE",
-                    },
-                    colormap=colormap,
-                    scale=scale,
+                new_layer = self.add_replayer.emit(
+                    dict(
+                        data=item,
+                        metadata={
+                            "mikro": True,
+                            "representation": self.managed_image,
+                            "type": "IMAGE",
+                        },
+                    )
                 )
 
                 self._image_layers.append(new_layer)
@@ -411,7 +430,7 @@ class RepresentationQtModel(QtCore.QObject):
     def __init__(self, widget, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.widget = widget
-        self.app: App = self.widget.app
+        self.app: QtApp = self.widget.app
         self.viewer: napari.Viewer = self.widget.viewer
 
         self.managed_layers: Dict[str, ImageLayer] = {}
