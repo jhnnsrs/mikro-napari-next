@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from functools import partial
 from koil.qt import QtRunner, async_to_qt
 from mikro_napari.models.representation import SELECT_MODE_MAP
 from mikro_napari.widgets.dialogs.new_relation import NewRelationDialog
@@ -12,7 +14,6 @@ from mikro_next.api.schema import (
 )
 from kraph.api.schema import (
     acreate_measurement,
-    acreate_entity_relation,
 )
 
 from qtpy import QtWidgets
@@ -23,6 +24,8 @@ from napari.layers import Layer, Shapes
 import webbrowser
 from mikro_napari.widgets.table.table_widget import TableWidget
 from mikro_napari.widgets.base import BaseMikroNapariWidget
+from rekuest_next.api.schema import alist_shortcuts
+from rekuest_widgets.structure import Structure, StructureWidget
 
 
 class RoiWidget(QtWidgets.QWidget):
@@ -62,10 +65,11 @@ class RoiLayerWidget(QtWidgets.QWidget):
 
         self.detailquery.returned.connect(self.update_layout)
         self.current_marked_rois = []
+        
 
-        self.layer.bind_key("m", self.show_relat_dialog)
-        self.layer.bind_key("n", self.show_new_entity_dialog)
-        self.layer.bind_key("o", self.open_in_browser)
+        self.layer.bind_key("m", self.show_relat_dialog, overwrite=True)
+        self.layer.bind_key("n", self.show_new_entity_dialog, overwrite=True)
+        self.layer.bind_key("o", self.open_in_browser, overwrite=True)
 
         self.layer.mouse_drag_callbacks.append(self.on_drag_roi_layer)
 
@@ -189,9 +193,12 @@ class RepresentationWidget(QtWidgets.QWidget):
 
     def update_layout(self, image: Image):
         self.clearLayout()
+        
 
         if image.name:
             self._layout.addWidget(QtWidgets.QLabel(image.name))
+
+
 
 
 class SidebarWidget(BaseMikroNapariWidget):
@@ -203,11 +210,38 @@ class SidebarWidget(BaseMikroNapariWidget):
         self.mylayout = QtWidgets.QVBoxLayout()
 
         self._active_widget = QtWidgets.QLabel("Nothing selected")
+        
+        self.structure_widget = StructureWidget()
+        
+        
+        self.viewer.bind_key("Control-1", self.run_first_shortcut)
+        self.viewer.bind_key("Control-2", self.run_second_shortcut)
+        self.viewer.bind_key("Control-3", self.run_third_shortcut)
+        
+        
+        self.mylayout.addWidget(self.structure_widget)
+        
+        self.bus.add_structure_hook("sidebar_widget", self.structure_widget.load)
+        
+        
+        
         self.mylayout.addWidget(self._active_widget)
 
         self.viewer.layers.selection.events.changed.connect(self.on_layer_changed)
 
         self.setLayout(self.mylayout)
+        
+      
+    def run_first_shortcut(self, event):
+        self.structure_widget.run_shortcut_index(0)
+        
+    
+    def run_second_shortcut(self, event):
+        self.structure_widget.run_shortcut_index(1)
+
+        
+    def run_third_shortcut(self, event):
+        self.structure_widget.run_shortcut_index(2)
 
     def replace_widget(self, widget):
         self.mylayout.removeWidget(self._active_widget)
@@ -223,10 +257,15 @@ class SidebarWidget(BaseMikroNapariWidget):
         self.viewer.layers.selection.active
         layer = self.viewer.layers.selection.active
         if layer is not None:
-            if "type" in layer.metadata:
-                if layer.metadata["type"] == "ROI":
-                    self.replace_widget(RoiLayerWidget(self.app, layer))
-                if layer.metadata["type"] == "IMAGE":
-                    self.replace_widget(
-                        RepresentationWidget(layer.metadata["representation"])
-                    )
+            if "identifier" in layer.metadata:
+                print("Loading structure")
+                self.structure_widget.load([Structure(identifier=layer.metadata["identifier"],object=layer.metadata["object"])])
+            else:
+                self.replace_widget(QtWidgets.QLabel("Unknown type"))
+        else:
+            self.replace_widget(QtWidgets.QLabel("Nothing selected"))
+            
+            
+    def on_roi_selection_changed(self, event):
+        self.viewer.layers.selection.active
+        layer = self.viewer.layers.selection.active

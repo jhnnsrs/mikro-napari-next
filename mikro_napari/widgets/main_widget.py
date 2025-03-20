@@ -1,4 +1,4 @@
-from koil.qt import QtRunner
+from koil.qt import QtRunner, qt_to_async
 from mikro_next.api.schema import (
     Image,
     from_array_like,
@@ -9,6 +9,7 @@ from qtpy import QtCore
 from arkitekt_next.qt.magic_bar import MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
+from rekuest_widgets.structure import Structure
 from .base import BaseMikroNapariWidget
 import xarray as xr
 from rekuest_next.qt.builders import qtinloopactifier
@@ -20,6 +21,9 @@ class MikroNapariWidget(BaseMikroNapariWidget):
     def __init__(self, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
         self.mylayout = QtWidgets.QVBoxLayout()
+        
+        
+        
         self.representation_controller = RepresentationQtModel(self)
 
         self.magic_bar = MagicBar(
@@ -45,10 +49,21 @@ class MikroNapariWidget(BaseMikroNapariWidget):
 
         self.setWindowTitle("My Own Title")
         self.setLayout(self.mylayout)
+        
+        
+        
+        self.aopen = qt_to_async(self.image_loaded, autoresolve=True)
+        
 
         self.viewer.layers.selection.events.active.connect(self.on_selection_changed)
 
         rekuest = self.app.services.get("rekuest")
+        
+        rekuest.register(
+            self.open_image_now, 
+        )
+        
+        
 
         rekuest.register(
             self.representation_controller.on_image_loaded,
@@ -73,6 +88,28 @@ class MikroNapariWidget(BaseMikroNapariWidget):
         rekuest.register(
             self.representation_controller.stream_rois,
         )
+        
+       
+    def image_loaded(self, image: Image):
+        self.viewer.add_image(image.data, name=image.name, metadata={
+                    "mikro": True,
+                    "identifier": "@mikro/image",
+                    "object": image.id,
+                    "type": "IMAGE",
+                })
+        
+        
+    
+    async def open_image_now(self, image: Image):
+        await self.aopen(image)
+        
+        
+        
+        
+        
+        
+        
+        
 
     def on_arkitekt_error(self, e):
         print(e)

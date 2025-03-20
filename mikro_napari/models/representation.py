@@ -8,6 +8,7 @@ from napari.layers.shapes._shapes_constants import Mode
 from qtpy import QtCore, QtWidgets
 from arkitekt_next.qt.types import QtApp
 from koil.qt import QtCoro, QtFuture, QtGeneratorRunner, QtRunner, QtSignal
+from mikro_napari.global_bus import get_bus_or_build_bus
 from mikro_next.api.schema import (
     AffineTransformationView,
     Image,
@@ -25,6 +26,8 @@ from mikro_next.api.schema import (
 )
 from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
 import vispy.color
+
+from rekuest_widgets.structure import Structure
 
 
 DESIGN_MODE_MAP = {
@@ -120,6 +123,9 @@ class ManagedLayer(QtCore.QObject):
         super().__init__(*args, **kwargs)
         assert viewer is not None, "Managed Layer needs access to the viewer"
         self.viewer = viewer
+        self.bus = get_bus_or_build_bus(self)
+
+        
         self.managed_layers = {}
 
     def add_layer(self, layerid: str, layer: "ManagedLayer"):
@@ -194,7 +200,7 @@ class RoiLayer(ManagedLayer):
         self._roi_layer = self.viewer.add_shapes(
             metadata={
                 "mikro": True,
-                "representation": self.image,
+                "image": self.image,
                 "type": "ROI",
             },
         )
@@ -219,6 +225,7 @@ class RoiLayer(ManagedLayer):
             self.roi_state[result.id] = result
 
         self.roi_user_created.emit(result)
+        self.bus.run_structure_hook([Structure("@mikro/roi", result.id)])
 
     def show_rois(self):
         self._get_rois_future = self.get_rois_query.run(image=self.image.id)
@@ -280,6 +287,7 @@ class RoiLayer(ManagedLayer):
                 napari_roi = self._napari_rois[i]
                 selected_rois.append(self.roi_state[napari_roi.id])
 
+            self.bus.run_structure_hook([Structure("@mikro/roi", roi.id) for roi in selected_rois])
             self.rois_user_selected.emit(selected_rois)
 
         if layer.mode in DESIGN_MODE_MAP:
@@ -340,8 +348,9 @@ class ImageLayer(ManagedLayer):
         self.with_rois = with_rois
         self.scale_to_physical_size = scale_to_physical_size
         self.roi_layer = None
-
+        
         self.add_replayer.connect(self.add_image_layer)
+
 
     def add_image_layer(self, layer):
         self.viewer.add_image(**layer)
@@ -373,7 +382,7 @@ class ImageLayer(ManagedLayer):
         else:
             scale = (1, 1, 1)
 
-        if contexts and False:
+        if contexts:
             context = contexts[0]
 
             data = []
@@ -400,26 +409,33 @@ class ImageLayer(ManagedLayer):
                         data=item,
                         metadata={
                             "mikro": True,
-                            "representation": self.managed_image,
+                            "object": self.managed_image.id,
+                            "identifier": "@mikro/image",
                             "type": "IMAGE",
                         },
+                        colormap=colormap,
+                        scale=scale,
+                        blending="additive",
                     )
                 )
 
                 self._image_layers.append(new_layer)
 
         else:
-            new_layer = self.viewer.add_image(
-                self.managed_image.data.transpose(*list("ctzyx")),
-                metadata={
+            self.add_replayer.emit(
+                dict(
+                    data=self.managed_image.data.transpose(*list("ctzyx")),
+                     metadata={
                     "mikro": True,
-                    "representation": self.managed_image,
+                    "object": self.managed_image.id,
+                    "identifier": "@mikro/image",
                     "type": "IMAGE",
                 },
-                scale=scale,
+                )
+               
+               
             )
 
-            self._image_layers.append(new_layer)
 
         print(scale)
 

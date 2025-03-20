@@ -17,12 +17,7 @@ def get_app_or_build_for_widget(widget: QtWidgets.QWidget) -> App:
     if global_app is None:
         settings = QtCore.QSettings("napari", f"{identifier}:{version}")
 
-        if dev:
-            global_app = devqt(
-                identifier, version, parent=widget, logo=logo, settings=settings
-            )
-        else:
-            global_app = publicqt(
-                identifier, version, parent=widget, logo=logo, settings=settings
-            )
+        global_app = devqt(
+            identifier, version, parent=widget, logo=logo, settings=settings
+        )
     return global_app

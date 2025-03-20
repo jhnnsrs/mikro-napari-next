@@ -6,10 +6,9 @@ from mikro_next.api.schema import (
     aget_image,
 )
 from kraph.api.schema import (
-    alist_linked_expressions,
-    LinkedExpressionFilter,
-    ListLinkedExpression,
-    ExpressionKind,
+    RelationCategory,
+    asearch_relation_category,
+    RelationCategoryFilter,
 )
 
 
@@ -25,7 +24,7 @@ class NewRelationDialog(QtWidgets.QDialog):
 
         self.repList = QtWidgets.QListWidget()
 
-        self.repquery = async_to_qt(alist_linked_expressions)
+        self.repquery = async_to_qt(asearch_relation_category)
         self.repquery.started.connect(lambda: self.label.setText("Loading..."))
         self.repquery.returned.connect(self.update_list)
         self.repquery.errored.connect(print)
@@ -47,16 +46,16 @@ class NewRelationDialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
         self.fetch_images_task = self.repquery.run(
-            filters=LinkedExpressionFilter(pinned=True, kind=ExpressionKind.RELATION)
+            filters=RelationCategoryFilter(pinned=True)
         )
         self.selected_item = None
 
     def reload(self):
         self.fetch_images_task = self.repquery.run(
-            filters=LinkedExpressionFilter(pinned=True, kind=ExpressionKind.RELATION)
+            filters=RelationCategoryFilter(pinned=True)
         )
 
-    def update_list(self, exprs: List[ListLinkedExpression]):
+    def update_list(self, exprs: List[RelationCategory]):
         self.repList.clear()
         self.label.setText("Select an Relation Type")
 
@@ -64,7 +63,7 @@ class NewRelationDialog(QtWidgets.QDialog):
 
         for expr in exprs:
             item = QtWidgets.QListWidgetItem(
-                f"{expr.expression.label}  ({expr.graph.id})"
+                f"{expr.label}  ({expr.ontology.name})"
             )
             item.__linked_id = expr.id
             self.repList.addItem(item)

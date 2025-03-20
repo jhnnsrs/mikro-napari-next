@@ -6,10 +6,9 @@ from mikro_next.api.schema import (
     aget_image,
 )
 from kraph.api.schema import (
-    alist_linked_expressions,
-    ExpressionKind,
-    LinkedExpressionFilter,
-    ListLinkedExpression,
+    alist_structure_category,
+    StructureCategoryFilter,
+    StructureCategory
 )
 
 
@@ -25,7 +24,7 @@ class NewRoisEntityDialog(QtWidgets.QDialog):
 
         self.repList = QtWidgets.QListWidget()
 
-        self.repquery = async_to_qt(alist_linked_expressions)
+        self.repquery = async_to_qt(alist_structure_category)
         self.repquery.started.connect(lambda: self.label.setText("Loading..."))
         self.repquery.returned.connect(self.update_list)
         self.repquery.errored.connect(print)
@@ -47,13 +46,13 @@ class NewRoisEntityDialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
         self.fetch_images_task = self.repquery.run(
-            filters=LinkedExpressionFilter(pinned=True, kind=ExpressionKind.ENTITY)
+            filters=StructureCategoryFilter(pinned=True)
         )
         self.selected_item = None
 
     def reload(self):
         self.fetch_images_task = self.repquery.run(
-            filters=LinkedExpressionFilter(pinned=True, kind=ExpressionKind.ENTITY)
+            filters=StructureCategoryFilter(pinned=True)
         )
 
     def on_image_loaded(self, rep: Image):
@@ -61,7 +60,7 @@ class NewRoisEntityDialog(QtWidgets.QDialog):
         self.label.setText(f"Selected {rep.name} ")
         self.selected_representation = rep
 
-    def update_list(self, exprs: List[ListLinkedExpression]):
+    def update_list(self, exprs: List[StructureCategory]):
         print("HERE")
         print(exprs)
         self.repList.clear()
