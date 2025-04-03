@@ -34,6 +34,9 @@ DESIGN_MODE_MAP = {
     Mode.ADD_RECTANGLE: RoiKind.RECTANGLE,
     Mode.ADD_ELLIPSE: RoiKind.ELLIPSIS,
     Mode.ADD_LINE: RoiKind.LINE,
+    Mode.ADD_PATH: RoiKind.PATH,
+    Mode.ADD_POLYGON_LASSO: RoiKind.POLYGON,
+    
 }
 
 SELECT_MODE_MAP = {
@@ -44,7 +47,6 @@ SELECT_MODE_MAP = {
 
 DOUBLE_CLICK_MODE_MAP = {
     Mode.ADD_POLYGON: RoiKind.POLYGON,
-    Mode.ADD_PATH: RoiKind.PATH,
 }
 
 
@@ -179,6 +181,27 @@ class RoiLayer(ManagedLayer):
         self.watch_rois_subscription.errored.connect(print)
 
         self.scale_to_physical_size = scale_to_physical_size
+        
+        
+
+        if self.scale_to_physical_size:
+            affinetransformation = [
+                i
+                for i in self.image.views
+                if isinstance(i, AffineTransformationView)
+            ]
+            
+            
+            affinetransformation = affinetransformation[0]
+            scaleX = affinetransformation.affine_matrix[0][0]
+            scaleY = affinetransformation.affine_matrix[1][1]
+            scaleZ = affinetransformation.affine_matrix[2][2]
+            self.scale = (scaleX, scaleY)
+        else:
+            self.scale = (1, 1)
+        
+        
+        
         self.koiled_create_rois = QtSignal(self.create_rois_runner.returned)
 
         self.layer = None
@@ -238,7 +261,7 @@ class RoiLayer(ManagedLayer):
         self._napari_rois: List[NapariROI] = list(
             filter(
                 lambda x: x is not None,
-                [convert_roi_to_napari_roi(roi) for roi in self.roi_state.values()],
+                [convert_roi_to_napari_roi(roi, scale=self.scale) for roi in self.roi_state.values()],
             )
         )
         self._roi_layer.name = f"ROIs for {self.image.name}"
@@ -294,9 +317,12 @@ class RoiLayer(ManagedLayer):
             if len(self._roi_layer.data) > len(self._napari_rois):
                 c, t, z = event.position[:3]
                 print("Creating")
+                
+            
+                
 
                 vectors = FiveDVector.list_from_numpyarray(
-                    self._roi_layer.data[-1], t=t, z=z, c=c
+                    self._roi_layer.data[-1] / self.scale[:2], t=t, z=z, c=c
                 )
 
                 print("The vectors", vectors)
@@ -323,9 +349,9 @@ class RoiLayer(ManagedLayer):
 
                 self.create_rois_runner.run(
                     image=self.image.id,
-                    vectors=FiveDVector.list_from_numpyarray(
-                        self._roi_layer.data[-1], t=t, z=z, c=c
-                    ),
+                    vectors = FiveDVector.list_from_numpyarray(
+                    self._roi_layer.data[-1] / self.scale[:2], t=t, z=z, c=c
+                ),
                     kind=DOUBLE_CLICK_MODE_MAP[layer.mode],
                 )
 

@@ -12,7 +12,7 @@ class NapariROI:
     id: str
 
 
-def convert_roi_to_napari_roi(roi: ROI) -> NapariROI:
+def convert_roi_to_napari_roi(roi: ROI, scale: list[float]) -> NapariROI:
     """Convert a ROI to a napari ROI."""
 
     if roi.kind in [
@@ -24,7 +24,7 @@ def convert_roi_to_napari_roi(roi: ROI) -> NapariROI:
         return NapariROI(
             **{
                 "type": roi.kind.lower(),
-                "data": roi.get_vector_data("xy"),
+                "data": roi.get_vector_data("xy") * scale, # X Y is the order of the coordinates instead of Y X
                 "color": "white",
                 "id": roi.id,
             }
