@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from mikro_next.api.schema import Image
+from mikro.api.schema import Image
 import uuid
 
 

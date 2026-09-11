@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Tuple
 from qtpy import QtWidgets
-from koil.qt import QtRunner
-from mikro_next.api.schema import Image, aget_image
+from koil.qt import async_to_qt
+from mikro.api.schema import Image, aget_image, aimages
 
 
 class OpenImageDialog(QtWidgets.QDialog):
@@ -14,16 +14,14 @@ class OpenImageDialog(QtWidgets.QDialog):
 
         self.repList = QtWidgets.QListWidget()
 
-        aget_images = None
-
-        self.repquery = QtRunner(aget_images)
-        self.repquery.started.connect(lambda: self.label.setText("Loading..."))
+        self.repquery = async_to_qt(aimages)
+        self.repquery.called.connect(lambda x: self.label.setText("Loading..."))
         self.repquery.returned.connect(self.update_list)
         self.repquery.errored.connect(print)
 
-        self.detailquery = QtRunner(aget_image)
-        self.detailquery.started.connect(
-            lambda: self.buttonBox.buttons()[0].setEnabled(False)
+        self.detailquery = async_to_qt(aget_image)
+        self.detailquery.called.connect(
+            lambda x: self.buttonBox.buttons()[0].setEnabled(False)
         )
         self.detailquery.errored.connect(lambda e: self.label.setText("Error loading"))
         self.detailquery.returned.connect(self.on_image_loaded)
@@ -48,14 +46,12 @@ class OpenImageDialog(QtWidgets.QDialog):
         self.label.setText(f"Selected {rep.name} ")
         self.selected_representation = rep
 
-    def update_list(self, reps: List[Image]):
+    def update_list(self, reps: Tuple[Image, ...]):
         self.repList.clear()
         self.label.setText("Select An image that you want to open")
 
         for rep in reps:
-            item = QtWidgets.QListWidgetItem(
-                f"{rep.name}  { 'on '  + rep.sample.name if rep.sample else ''}"
-            )
+            item = QtWidgets.QListWidgetItem(f"{rep.name}")
             item.__repid = rep.id
             self.repList.addItem(item)
 

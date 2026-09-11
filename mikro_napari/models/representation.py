@@ -1,20 +1,29 @@
 import asyncio
 import math
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import dask.array as da
 import napari
 import numpy as np
 from napari.layers.shapes._shapes_constants import Mode
+from ollama import show
 from qtpy import QtCore, QtWidgets
-from arkitekt_next.qt.types import QtApp
-from koil.qt import QtCoro, QtFuture, QtGeneratorRunner, QtRunner, QtSignal
+from arkitekt.qt.types import QtApp
+from koil.qt import (
+    QtFuture,
+    async_gen_to_qt,
+    async_to_qt,
+    qt_to_async,
+    signal_builder,
+    SignalProtocol,
+)
 from mikro_napari.global_bus import get_bus_or_build_bus
-from mikro_next.api.schema import (
+from mikro.api.schema import (
     AffineTransformationView,
     Image,
     RoiKind,
     ROI,
     Stage,
+    WatchRoisSubscriptionRois,
     acreate_roi,
     awatch_rois,
     adelete_roi,
@@ -27,6 +36,7 @@ from mikro_next.api.schema import (
 from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
 import vispy.color
 
+from rath.scalars import ID
 from rekuest_widgets.structure import Structure
 
 
@@ -36,7 +46,6 @@ DESIGN_MODE_MAP = {
     Mode.ADD_LINE: RoiKind.LINE,
     Mode.ADD_PATH: RoiKind.PATH,
     Mode.ADD_POLYGON_LASSO: RoiKind.POLYGON,
-    
 }
 
 SELECT_MODE_MAP = {
@@ -87,17 +96,17 @@ class TaskDone(QtWidgets.QWidget):
         self.listeners = {}
         self.buttons = {}
         self.futures = {}
-        self.ask_coro = QtCoro(self.ask)
+        self.ask_coro = qt_to_async(self.ask)
         self.ask_coro.cancelled.connect(self.on_cancelled)
 
-    def ask(self, future: QtFuture, text):
+    def ask(self, future: QtFuture[bool], text: str) -> None:
         button = QtWidgets.QPushButton(text)
         button.clicked.connect(lambda: self.on_done(future))
         self.futures[future.id] = future
         self.buttons[future.id] = button
         self.update_buttons()
 
-    def on_done(self, future) -> None:
+    def on_done(self, future: QtFuture[bool]) -> None:
         future.resolve(True)
         del self.buttons[future.id]
         self.update_buttons()
@@ -121,13 +130,12 @@ class TaskDone(QtWidgets.QWidget):
 
 
 class ManagedLayer(QtCore.QObject):
-    def __init__(self, *args, viewer: napari.Viewer = None, **kwargs) -> None:
+    def __init__(self, *args, viewer: napari.Viewer | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         assert viewer is not None, "Managed Layer needs access to the viewer"
         self.viewer = viewer
         self.bus = get_bus_or_build_bus(self)
 
-        
         self.managed_layers = {}
 
     def add_layer(self, layerid: str, layer: "ManagedLayer"):
@@ -147,7 +155,7 @@ class ManagedLayer(QtCore.QObject):
 
 
 class RoiLayer(ManagedLayer):
-    roi_user_created = QtCore.Signal(ROI)
+    roi_user_created: SignalProtocol[ROI] = signal_builder(ROI)
     roi_user_deleted = QtCore.Signal(str)
     roi_user_updated = QtCore.Signal(ROI)
     rois_user_selected = QtCore.Signal(list)
@@ -164,45 +172,39 @@ class RoiLayer(ManagedLayer):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.image = image
-        self.get_rois_query = QtRunner(aget_rois)
+        self.get_rois_query = async_to_qt(aget_rois)
         self.get_rois_query.returned.connect(self._on_rois_loaded)
         self.get_rois_query.errored.connect(print)
 
-        self.create_rois_runner = QtRunner(acreate_roi)
+        self.create_rois_runner = async_to_qt(acreate_roi)
         self.create_rois_runner.returned.connect(self.on_roi_created)
         self.create_rois_runner.errored.connect(print)
 
-        self.delete_rois_runner = QtRunner(adelete_roi)
+        self.delete_rois_runner = async_to_qt(adelete_roi)
         self.delete_rois_runner.returned.connect(self.on_roi_deleted)
         self.delete_rois_runner.errored.connect(print)
 
-        self.watch_rois_subscription = QtGeneratorRunner(awatch_rois)
+        self.watch_rois_subscription = async_gen_to_qt(awatch_rois)
         self.watch_rois_subscription.yielded.connect(self.on_rois_updated)
         self.watch_rois_subscription.errored.connect(print)
 
         self.scale_to_physical_size = scale_to_physical_size
-        
-        
 
         if self.scale_to_physical_size:
             affinetransformation = [
-                i
-                for i in self.image.views
-                if isinstance(i, AffineTransformationView)
+                i for i in self.image.views if isinstance(i, AffineTransformationView)
             ]
-            
-            
-            affinetransformation = affinetransformation[0]
-            scaleX = affinetransformation.affine_matrix[0][0]
-            scaleY = affinetransformation.affine_matrix[1][1]
-            scaleZ = affinetransformation.affine_matrix[2][2]
-            self.scale = (scaleX, scaleY)
+
+            if affinetransformation:
+                affinetransformation = affinetransformation[0]
+                scaleX = affinetransformation.affine_matrix[0][0]
+                scaleY = affinetransformation.affine_matrix[1][1]
+                scaleZ = affinetransformation.affine_matrix[2][2]
+                self.scale = (scaleX, scaleY)
+            else:
+                self.scale = (1, 1)
         else:
             self.scale = (1, 1)
-        
-        
-        
-        self.koiled_create_rois = QtSignal(self.create_rois_runner.returned)
 
         self.layer = None
         self._get_rois_future = None
@@ -237,7 +239,7 @@ class RoiLayer(ManagedLayer):
         if watch_rois:
             self.watch_rois()
 
-    def on_roi_deleted(self, result: str):
+    def on_roi_deleted(self, result: ID):
         if not self.is_watching:
             del self.roi_state[str(result)]
 
@@ -261,7 +263,10 @@ class RoiLayer(ManagedLayer):
         self._napari_rois: List[NapariROI] = list(
             filter(
                 lambda x: x is not None,
-                [convert_roi_to_napari_roi(roi, scale=self.scale) for roi in self.roi_state.values()],
+                [
+                    convert_roi_to_napari_roi(roi, scale=self.scale)
+                    for roi in self.roi_state.values()
+                ],
             )
         )
         self._roi_layer.name = f"ROIs for {self.image.name}"
@@ -283,11 +288,11 @@ class RoiLayer(ManagedLayer):
 
         self._roi_layer.features = {"roi": [r.id for r in self._napari_rois]}
 
-    def _on_rois_loaded(self, rois: List[ROI]):
+    def _on_rois_loaded(self, rois: Tuple[ROI, ...]):
         self.roi_state = {roi.id: roi for roi in rois}
         self.update_roi_layer()
 
-    def on_rois_updated(self, ev: WatchRoisSubscription):
+    def on_rois_updated(self, ev: WatchRoisSubscriptionRois):
         if ev.create:
             self.roi_state[ev.create.id] = ev.create
             self.roi_event_created.emit(ev.create)
@@ -310,16 +315,15 @@ class RoiLayer(ManagedLayer):
                 napari_roi = self._napari_rois[i]
                 selected_rois.append(self.roi_state[napari_roi.id])
 
-            self.bus.run_structure_hook([Structure("@mikro/roi", roi.id) for roi in selected_rois])
+            self.bus.run_structure_hook(
+                [Structure("@mikro/roi", roi.id) for roi in selected_rois]
+            )
             self.rois_user_selected.emit(selected_rois)
 
         if layer.mode in DESIGN_MODE_MAP:
             if len(self._roi_layer.data) > len(self._napari_rois):
                 c, t, z = event.position[:3]
                 print("Creating")
-                
-            
-                
 
                 vectors = FiveDVector.list_from_numpyarray(
                     self._roi_layer.data[-1] / self.scale[:2], t=t, z=z, c=c
@@ -349,9 +353,9 @@ class RoiLayer(ManagedLayer):
 
                 self.create_rois_runner.run(
                     image=self.image.id,
-                    vectors = FiveDVector.list_from_numpyarray(
-                    self._roi_layer.data[-1] / self.scale[:2], t=t, z=z, c=c
-                ),
+                    vectors=FiveDVector.list_from_numpyarray(
+                        self._roi_layer.data[-1] / self.scale[:2], t=t, z=z, c=c
+                    ),
                     kind=DOUBLE_CLICK_MODE_MAP[layer.mode],
                 )
 
@@ -374,9 +378,8 @@ class ImageLayer(ManagedLayer):
         self.with_rois = with_rois
         self.scale_to_physical_size = scale_to_physical_size
         self.roi_layer = None
-        
-        self.add_replayer.connect(self.add_image_layer)
 
+        self.add_replayer.connect(self.add_image_layer)
 
     def add_image_layer(self, layer):
         self.viewer.add_image(**layer)
@@ -414,13 +417,10 @@ class ImageLayer(ManagedLayer):
             data = []
             for view in context.views:
                 data.append(
-                    self.managed_image.data.isel(c=view.c_min)
-                    .transpose(*list("tzyx"))
-                    .compute()
+                    self.managed_image.data.isel(c=view.c_min).transpose(*list("tzyx"))
                 )
 
             for item, view in zip(data, context.views):
-
                 if view.color_map == ColorMap.INTENSITY:
                     print([[0, 0, 0, 0], [i / 255 for i in view.base_color]])
                     colormap = vispy.color.Colormap(
@@ -451,17 +451,14 @@ class ImageLayer(ManagedLayer):
             self.add_replayer.emit(
                 dict(
                     data=self.managed_image.data.transpose(*list("ctzyx")),
-                     metadata={
-                    "mikro": True,
-                    "object": self.managed_image.id,
-                    "identifier": "@mikro/image",
-                    "type": "IMAGE",
-                },
+                    metadata={
+                        "mikro": True,
+                        "object": self.managed_image.id,
+                        "identifier": "@mikro/image",
+                        "type": "IMAGE",
+                    },
                 )
-               
-               
             )
-
 
         print(scale)
 
@@ -485,12 +482,14 @@ class RepresentationQtModel(QtCore.QObject):
         self._roi_layer = None
         self.roi_state: Dict[str, ROI] = {}
 
-        self.create_image_layer_coro = QtCoro(self.create_image_layer, autoresolve=True)
-        self.create_roi_layer_coro = QtCoro(self.create_roi_layer, autoresolve=True)
+        self.create_image_layer_coro = qt_to_async(self.create_image_layer)
+        self.create_roi_layer_coro = qt_to_async(self.create_roi_layer)
 
     def create_image_layer(
-        self, image: Image, scale_to_physical_size: bool = True
-    ) -> ImageLayer:
+        self,
+        image: Image,
+        scale_to_physical_size: bool = True,
+    ) -> None:
         if image.id not in self.managed_layers:
             layer = ImageLayer(
                 image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
@@ -500,15 +499,15 @@ class RepresentationQtModel(QtCore.QObject):
             layer = self.managed_layers[image.id]
 
         layer.show()
-        return layer
 
     def create_roi_layer(
         self,
+        future: QtFuture[RoiLayer],
         image: Image,
         scale_to_physical_size: bool = True,
         fetch_rois=True,
         watch_rois=True,
-    ) -> RoiLayer:
+    ) -> None:
         if image.id not in self.managed_roi_layers:
             layer = RoiLayer(
                 image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
@@ -518,11 +517,12 @@ class RepresentationQtModel(QtCore.QObject):
             layer = self.managed_roi_layers[image.id]
 
         layer.show(fetch_rois=fetch_rois, watch_rois=watch_rois)
-        return layer
+
+        future.resolve(layer)
 
     def on_image_loaded(
         self,
-        rep: Image,
+        image: Image,
         show_roi_layer: bool = True,
         scale_to_physical_size: bool = True,
     ):
@@ -533,9 +533,22 @@ class RepresentationQtModel(QtCore.QObject):
         Args:
             rep (RepresentationFragment): The Image
         """
-        self.create_image_layer(rep, scale_to_physical_size=scale_to_physical_size)
-        if show_roi_layer:
-            self.create_roi_layer(rep)
+        if image.id not in self.managed_layers:
+            layer = ImageLayer(
+                image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
+            )
+            self.managed_layers[image.id] = layer
+        else:  # pragma: no cover
+            layer = self.managed_layers[image.id]
+
+        if show_roi_layer and image.id not in self.managed_roi_layers:
+            roi_layer = RoiLayer(
+                image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
+            )
+            self.managed_roi_layers[image.id] = roi_layer
+            roi_layer.show()
+
+        layer.show()
 
     def open_image(
         self,

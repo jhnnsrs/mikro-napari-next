@@ -1,18 +1,18 @@
-from koil.qt import QtRunner, qt_to_async
-from mikro_next.api.schema import (
+from koil.qt import async_to_qt, qt_to_async, SignalProtocol
+from mikro.api.schema import (
     Image,
     from_array_like,
     afrom_array_like,
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
-from arkitekt_next.qt.magic_bar import MagicBar
+from arkitekt.qt.magic_bar import MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 from rekuest_widgets.structure import Structure
 from .base import BaseMikroNapariWidget
 import xarray as xr
-from rekuest_next.qt.builders import qtinloopactifier
+from rekuest.qt.builders import qtinloopactifier
 
 
 class MikroNapariWidget(BaseMikroNapariWidget):
@@ -21,9 +21,7 @@ class MikroNapariWidget(BaseMikroNapariWidget):
     def __init__(self, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
         self.mylayout = QtWidgets.QVBoxLayout()
-        
-        
-        
+
         self.representation_controller = RepresentationQtModel(self)
 
         self.magic_bar = MagicBar(
@@ -31,10 +29,11 @@ class MikroNapariWidget(BaseMikroNapariWidget):
             dark_mode=True,
             on_error=self.on_arkitekt_error,
         )
+
         self.magic_bar.app_up.connect(self.on_app_up)
         self.magic_bar.app_down.connect(self.on_app_down)
 
-        self.upload_task = QtRunner(afrom_array_like)
+        self.upload_task = async_to_qt(afrom_array_like)
         self.upload_task.errored.connect(self.on_error)
         self.upload_task.returned.connect(
             self.representation_controller.on_image_loaded
@@ -49,67 +48,44 @@ class MikroNapariWidget(BaseMikroNapariWidget):
 
         self.setWindowTitle("My Own Title")
         self.setLayout(self.mylayout)
-        
-        
-        
-        self.aopen = qt_to_async(self.image_loaded, autoresolve=True)
-        
+
+        self.aopen = qt_to_async(self.image_loaded)
 
         self.viewer.layers.selection.events.active.connect(self.on_selection_changed)
 
         rekuest = self.app.services.get("rekuest")
-        
-        rekuest.register(
-            self.open_image_now, 
-        )
-        
-        
+        if rekuest is None:
+            raise Exception("Rekuest service not found")
 
         rekuest.register(
             self.representation_controller.on_image_loaded,
             actifier=qtinloopactifier,
-            parent=self,
         )
         rekuest.register(
             self.representation_controller.open_image,
-            actifier=qtinloopactifier,
-            parent=self,
         )
         rekuest.register(
             self.representation_controller.tile_images,
-            actifier=qtinloopactifier,
-            parent=self,
         )
         rekuest.register(
             self.upload_layer,
-            actifier=qtinloopactifier,
-            parent=self,
         )
         rekuest.register(
             self.representation_controller.stream_rois,
         )
-        
-       
-    def image_loaded(self, image: Image):
-        self.viewer.add_image(image.data, name=image.name, metadata={
-                    "mikro": True,
-                    "identifier": "@mikro/image",
-                    "object": image.id,
-                    "type": "IMAGE",
-                })
-        
-        
-    
-    async def open_image_now(self, image: Image):
-        await self.aopen(image)
-        
-        
-        
-        
-        
-        
-        
-        
+
+    def image_loaded(self, qtfuture, image: Image):
+        self.viewer.add_image(
+            image.data,
+            name=image.name,
+            metadata={
+                "mikro": True,
+                "identifier": "@mikro/image",
+                "object": image.id,
+                "type": "IMAGE",
+            },
+        )
+        qtfuture.resolve(image)
 
     def on_arkitekt_error(self, e):
         print(e)
@@ -170,7 +146,6 @@ class MikroNapariWidget(BaseMikroNapariWidget):
 
     def cause_upload(self):
         for image_layer in self.active_non_mikro_layers:
-
             if image_layer.ndim == 2:
                 if image_layer.rgb:
                     xarray = xr.DataArray(image_layer.data, dims=list("xyc"))

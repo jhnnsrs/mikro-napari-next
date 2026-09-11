@@ -1,4 +1,4 @@
-from mikro_next.api.schema import Table
+from mikro.api.schema import Table
 from qtpy.QtWidgets import QTableView, QWidget
 from qtpy import QtWidgets, QtCore
 from mikro_napari.widgets.base import BaseMikroNapariWidget

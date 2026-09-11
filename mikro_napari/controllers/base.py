@@ -1,4 +1,4 @@
-from arkitekt_next.qt import QtApp
+from arkitekt.qt import QtApp
 from napari import Viewer
 from qtpy import QtCore
 
@@ -10,8 +10,8 @@ class BaseMikroNapariController(QtCore.QObject):
     def __init__(
         self,
         *args,
-        viewer: Viewer = None,
-        app: QtApp = None,
+        viewer: Viewer | None = None,
+        app: QtApp | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)

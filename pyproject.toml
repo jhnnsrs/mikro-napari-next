@@ -11,7 +11,7 @@ classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<=3.12"
-# Capped below 1: the `arkitekt` name now carries the former arkitekt-next
+# Capped below 1: the `arkitekt` name now carries the former arkitekt
 # line (2.x), a different package whose extras differ -- it has no `rekuest`
 # extra at all, so an uncapped resolve fails outright rather than upgrading.
 arkitekt = { version = ">=0.7.8,<1", extras = [

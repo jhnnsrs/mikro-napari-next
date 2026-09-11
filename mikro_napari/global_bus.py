@@ -1,37 +1,27 @@
 from typing import Callable, Dict, List
-from arkitekt_next import App
 from rekuest_widgets.structure import Structure
-from .manifest import identifier, version, logo
-from arkitekt_next.qt import publicqt, devqt
-from qtpy import QtCore, QtWidgets
+from qtpy import QtWidgets
 from dataclasses import dataclass
+
 
 @dataclass
 class Bus:
     structure_hooks: Dict[str, Callable]
-    
-    
+
     def add_structure_hook(self, sub: str, hook: Callable[[List[Structure]], bool]):
         self.structure_hooks[sub] = hook
-        
+
     def get_structure_hook(self, sub: str) -> Callable[[List[Structure]], bool]:
         return self.structure_hooks[sub]
-    
-    
+
     def run_structure_hook(self, structures: List[Structure]) -> bool:
         """Runs the structure hook for the given structures"""
-        
+
         for key, hook in self.structure_hooks.items():
             print("Running hook", key)
             hook(structures)
-        
-        
 
-
-
-
-
-
+        return True
 
 
 global_bus = None

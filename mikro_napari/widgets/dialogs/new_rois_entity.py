@@ -1,14 +1,9 @@
 from typing import List
 from qtpy import QtWidgets
 from koil.qt import async_to_qt
-from mikro_next.api.schema import (
+from mikro.api.schema import (
     Image,
     aget_image,
-)
-from kraph.api.schema import (
-    alist_structure_category,
-    StructureCategoryFilter,
-    StructureCategory
 )
 
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mikro_next.api.schema import ROI, RoiKind
+from mikro.api.schema import ROI, RoiKind
 
 
 @dataclass
@@ -24,10 +24,13 @@ def convert_roi_to_napari_roi(roi: ROI, scale: list[float]) -> NapariROI:
         return NapariROI(
             **{
                 "type": roi.kind.lower(),
-                "data": roi.get_vector_data("xy") * scale, # X Y is the order of the coordinates instead of Y X
+                "data": roi.get_vector_data("xy")
+                * scale,  # X Y is the order of the coordinates instead of Y X
                 "color": "white",
                 "id": roi.id,
             }
         )
 
-    return None
+    raise ValueError(
+        f"ROI kind {roi.kind} is not supported. Supported kinds are: {RoiKind.RECTANGLE}, {RoiKind.POLYGON}, {RoiKind.LINE}, {RoiKind.PATH}"
+    )

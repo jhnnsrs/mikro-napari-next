@@ -1,15 +1,6 @@
 from typing import List
 from qtpy import QtWidgets
 from koil.qt import async_to_qt
-from mikro_next.api.schema import (
-    Image,
-    aget_image,
-)
-from kraph.api.schema import (
-    RelationCategory,
-    asearch_relation_category,
-    RelationCategoryFilter,
-)
 
 
 class NewRelationDialog(QtWidgets.QDialog):
@@ -62,9 +53,7 @@ class NewRelationDialog(QtWidgets.QDialog):
         print(exprs)
 
         for expr in exprs:
-            item = QtWidgets.QListWidgetItem(
-                f"{expr.label}  ({expr.ontology.name})"
-            )
+            item = QtWidgets.QListWidgetItem(f"{expr.label}  ({expr.ontology.name})")
             item.__linked_id = expr.id
             self.repList.addItem(item)
 

@@ -1,6 +1,6 @@
-from arkitekt_next import App
+from arkitekt import App
 from .manifest import identifier, version, logo
-from arkitekt_next.qt import publicqt, devqt
+from arkitekt.qt import qt
 from qtpy import QtCore, QtWidgets
 
 global_app = None
@@ -17,7 +17,10 @@ def get_app_or_build_for_widget(widget: QtWidgets.QWidget) -> App:
     if global_app is None:
         settings = QtCore.QSettings("napari", f"{identifier}:{version}")
 
-        global_app = devqt(
-            identifier, version, parent=widget, logo=logo, settings=settings
+        global_app = qt(
+            identifier,
+            version,
+            parent=widget,
+            logo=logo,
         )
     return global_app

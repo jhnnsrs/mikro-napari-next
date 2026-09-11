@@ -1,7 +1,7 @@
 from mikro_napari.controllers.base import BaseMikroNapariController
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
-from rekuest_next.qt.builders import qtinloopactifier
-from mikro_next.api.schema import Table
+from rekuest.qt.builders import qtinloopactifier
+from mikro.api.schema import Table
 
 
 class SidebarController(BaseMikroNapariController):
@@ -9,13 +9,11 @@ class SidebarController(BaseMikroNapariController):
         super().__init__(*args, **kwargs)
         self.sidebar = sidebar
 
-        rekuest = self.app.services.get("rekuest")
+        rekuest = self.app.rekuest
 
         if rekuest:
             rekuest.register(
                 self.open_table,
-                actifier=qtinloopactifier,
-                parent=self,
                 collections=["display", "interactive"],
             )
 

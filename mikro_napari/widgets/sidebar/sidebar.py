@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from functools import partial
-from koil.qt import QtRunner, async_to_qt
+from koil.qt import qt_to_async, async_to_qt
 from mikro_napari.models.representation import SELECT_MODE_MAP
-from mikro_napari.widgets.dialogs.new_relation import NewRelationDialog
-from mikro_napari.widgets.dialogs.new_rois_entity import NewRoisEntityDialog
-from mikro_next.api.schema import (
+from mikro.api.schema import (
     ROI,
     UpdateRoiInput,
     aget_roi,
@@ -12,19 +10,16 @@ from mikro_next.api.schema import (
     aupdate_roi,
     Image,
 )
-from kraph.api.schema import (
-    acreate_measurement,
-)
 
 from qtpy import QtWidgets
 from qtpy import QtCore
-from arkitekt_next import App
+from arkitekt import App
 from mikro_napari.utils import NapariROI
 from napari.layers import Layer, Shapes
 import webbrowser
 from mikro_napari.widgets.table.table_widget import TableWidget
 from mikro_napari.widgets.base import BaseMikroNapariWidget
-from rekuest_next.api.schema import alist_shortcuts
+from rekuest.api.schema import alist_shortcuts
 from rekuest_widgets.structure import Structure, StructureWidget
 
 
@@ -37,7 +32,7 @@ class RoiWidget(QtWidgets.QWidget):
         self._layout = QtWidgets.QVBoxLayout()
         self.setLayout(self._layout)
 
-        self.detailquery = QtRunner(aget_roi)
+        self.detailquery = async_to_qt(aget_roi)
         self.detailquery.returned.connect(self.update_layout)
         self.detailquery.run(roi.id)
 
@@ -58,14 +53,13 @@ class RoiLayerWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         self.layer = layer
-        self.detailquery = QtRunner(aget_roi)
+        self.detailquery = async_to_qt(aget_roi)
 
         self.attach_entity = async_to_qt(self.aattach_entity)
         self.attach_relation = async_to_qt(self.aattach_relation)
 
         self.detailquery.returned.connect(self.update_layout)
         self.current_marked_rois = []
-        
 
         self.layer.bind_key("m", self.show_relat_dialog, overwrite=True)
         self.layer.bind_key("n", self.show_new_entity_dialog, overwrite=True)
@@ -181,7 +175,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         self._layout = QtWidgets.QVBoxLayout()
         self.setLayout(self._layout)
 
-        self.detailquery = QtRunner(aget_image)
+        self.detailquery = async_to_qt(aget_image)
         self.detailquery.returned.connect(self.update_layout)
         self.detailquery.run(image.id)
 
@@ -193,12 +187,9 @@ class RepresentationWidget(QtWidgets.QWidget):
 
     def update_layout(self, image: Image):
         self.clearLayout()
-        
 
         if image.name:
             self._layout.addWidget(QtWidgets.QLabel(image.name))
-
-
 
 
 class SidebarWidget(BaseMikroNapariWidget):
@@ -210,36 +201,29 @@ class SidebarWidget(BaseMikroNapariWidget):
         self.mylayout = QtWidgets.QVBoxLayout()
 
         self._active_widget = QtWidgets.QLabel("Nothing selected")
-        
+
         self.structure_widget = StructureWidget()
-        
-        
+
         self.viewer.bind_key("Control-1", self.run_first_shortcut)
         self.viewer.bind_key("Control-2", self.run_second_shortcut)
         self.viewer.bind_key("Control-3", self.run_third_shortcut)
-        
-        
+
         self.mylayout.addWidget(self.structure_widget)
-        
+
         self.bus.add_structure_hook("sidebar_widget", self.structure_widget.load)
-        
-        
-        
+
         self.mylayout.addWidget(self._active_widget)
 
         self.viewer.layers.selection.events.changed.connect(self.on_layer_changed)
 
         self.setLayout(self.mylayout)
-        
-      
+
     def run_first_shortcut(self, event):
         self.structure_widget.run_shortcut_index(0)
-        
-    
+
     def run_second_shortcut(self, event):
         self.structure_widget.run_shortcut_index(1)
 
-        
     def run_third_shortcut(self, event):
         self.structure_widget.run_shortcut_index(2)
 
@@ -259,13 +243,19 @@ class SidebarWidget(BaseMikroNapariWidget):
         if layer is not None:
             if "identifier" in layer.metadata:
                 print("Loading structure")
-                self.structure_widget.load([Structure(identifier=layer.metadata["identifier"],object=layer.metadata["object"])])
+                self.structure_widget.load(
+                    [
+                        Structure(
+                            identifier=layer.metadata["identifier"],
+                            object=layer.metadata["object"],
+                        )
+                    ]
+                )
             else:
                 self.replace_widget(QtWidgets.QLabel("Unknown type"))
         else:
             self.replace_widget(QtWidgets.QLabel("Nothing selected"))
-            
-            
+
     def on_roi_selection_changed(self, event):
         self.viewer.layers.selection.active
         layer = self.viewer.layers.selection.active

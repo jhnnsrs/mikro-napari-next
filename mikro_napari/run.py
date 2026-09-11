@@ -19,7 +19,6 @@ def main(**kwargs):
 
     AppController(sidebar, app=app, viewer=viewer)
     viewer.window.add_dock_widget(widget, area="left", name="Mikro Napari")
-    viewer.window.add_dock_widget(sidebar, area="right", name="Mikro Sidebar")
     # viewer.add_image(astronaut(), name="astronaut")
 
     napari.run()
