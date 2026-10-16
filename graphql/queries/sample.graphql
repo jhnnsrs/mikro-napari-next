@@ -1,5 +1,0 @@
-query expand_multiscale($id: ID!) {
-  sample(id: $id) {
-    ...MultiScaleSample
-  }
-}

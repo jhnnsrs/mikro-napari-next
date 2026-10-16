@@ -7,12 +7,12 @@
     {
       "label": "Patch",
       "type": "shell",
-      "command": "source venv/bin/activate && poetry version patch && poetry build "
+      "command": "uv version --bump patch && uv build"
     },
     {
       "label": "Publish",
       "type": "shell",
-      "command": "source venv/bin/activate && poetry publish"
+      "command": "uv publish"
     },
     {
       "label": "Run",

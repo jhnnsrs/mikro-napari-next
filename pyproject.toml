@@ -1,38 +1,66 @@
-[tool.poetry]
+[project]
 name = "mikro-napari"
 version = "0.1.63"
 description = "A napari plugin to interact with and provide functionality for a connected arkitekt server"
 readme = "README.md"
-repository = "https://github.com/jhnnsrs/mikro-napari"
-authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
-license = "CC BY-NC 3.0"
-packages = [{ include = "mikro_napari" }]
+authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
+license = { text = "CC BY-NC 3.0" }
 classifiers = ["Framework :: napari"]
+requires-python = ">=3.11"
+dependencies = [
+    # rekuest serves the actions the plugin offers; since arkitekt 7 it is an extra.
+    "arkitekt[qt,rekuest]>=6.1",
+    # 2D ROIs (two-component vertices) need the mikro release after 7.0.0, and
+    # "Stream ROIs" the koil release after 3.3.6 (a Qt generator that yields more
+    # than once). Raise the floors to those releases once they are out.
+    "mikro>=7.0",
+    "koil>=3.3.6",
+    "xarray>=2024.11.0",
+    "numpy>=1.26",
+    "qtpy>=2.4.3",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<=3.12"
-# Capped below 1: the `arkitekt` name now carries the former arkitekt
-# line (2.x), a different package whose extras differ -- it has no `rekuest`
-# extra at all, so an uncapped resolve fails outright rather than upgrading.
-arkitekt = { version = ">=0.7.8,<1", extras = [
-    "reaktion",
-    "rekuest",
-    "mikro",
-    "fluss",
-    "unlok"
-] }
+[project.urls]
+Repository = "https://github.com/jhnnsrs/mikro-napari"
 
-
-[tool.poetry.scripts]
+[project.scripts]
 mikro-napari = "mikro_napari.run:main"
+
+[project.entry-points."napari.manifest"]
+mikro-napari = "mikro_napari:napari.yaml"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=4",
+    "ruff>=0.6",
+    # 0.5 is where a layer names its dims and gives them units.
+    "napari>=0.5",
+    # Validates the one raw query against the schema the mikro client ships.
+    "graphql-core>=3.2",
+    # The Qt binding the tests run on (`qt_api` below); napari brings none of its own.
+    "pyqt5>=5.15",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mikro_napari"]
 
 [tool.mypy]
 exclude = ["venv/"]
 ignore_missing_imports = true
 
 
-[tool.ruff]
+[tool.ruff.lint]
 extend-select = ["ANN001","ANN204", "F401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]
+
+[tool.ruff]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -61,27 +89,6 @@ exclude = [
 # Same as Black.
 line-length = 100
 
-[tool.poetry.group.dev.dependencies]
-testcontainers = "3.7.0"
-autoflake = "^1.7.7"
-pytest = "^7.2.0"
-pytest-asyncio = "^0.20.2"
-turms = { version = ">=0.3.1", python = "^3.9" }
-aiohttp = "^3.8.3"
-websockets = "^10.4"
-black = "^23.1.0"
-pytest-cov = "^4.0.0"
-pytest-aiohttp = "^1.0.4"
-ruff = "^0.0.254"
-mypy = "^1.0.1"
-napari = "^0.4.17"
-pytest-qt = "^4.4.0"
-
-
-[tool.poetry.plugins."napari.manifest"]
-mikro-napari = "mikro_napari:napari.yaml"
-
-
 [[tool.pydoc-markdown.loaders]]
 type = "python"
 search_path = ["mikro_napari"]
@@ -97,8 +104,3 @@ markers = [
     "integration: marks tests that require a running server",
     "qt: marks tests that require a running qt application",
 ]
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

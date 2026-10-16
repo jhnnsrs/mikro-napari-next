@@ -1,5 +1,0 @@
-query get_label_for($representation: ID!, $instance: Int!) {
-  labelFor(representation: $representation, instance: $instance) {
-    ...DetailLabel
-  }
-}

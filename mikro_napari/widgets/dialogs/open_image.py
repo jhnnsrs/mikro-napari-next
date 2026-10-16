@@ -1,65 +1,82 @@
-from typing import List, Tuple
-from qtpy import QtWidgets
-from koil.qt import async_to_qt
-from mikro.api.schema import Image, aget_image, aimages
+from typing import Any, Callable, Optional
+
+from mikro import Mikro
+from mikro.api.schema import ArrayDataset, ArrayDatasetFilter, OffsetPaginationInput
+from qtpy import QtCore, QtWidgets
+
+PAGE = 50
+
+
+def search(mikro: Mikro, text: str) -> tuple[ArrayDataset, ...]:
+    """The datasets matching a search text, or the first page of all. Blocking."""
+    return mikro.get_array_datasets(
+        filters=ArrayDatasetFilter(search=text) if text else None,
+        pagination=OffsetPaginationInput(limit=PAGE, offset=0),
+    )
+
+
+def describe(dataset: ArrayDataset) -> str:
+    """A dataset as a line of the list: its name, its axes and their extents."""
+    extents = " ".join(f"{name}:{extent}" for name, extent in zip(dataset.axis_names, dataset.shape))
+    return f"{dataset.name}   [{extents}]" + ("   pyramid" if dataset.multiscale else "")
 
 
 class OpenImageDialog(QtWidgets.QDialog):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.setWindowTitle("Select Image!")
-        self.label = QtWidgets.QLabel("Select An image that you want to open")
+    """Pick one of the datasets on the server."""
 
-        QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+    def __init__(
+        self,
+        jobs: Any,
+        mikro: Callable[[], Mikro],
+        parent: Optional[QtWidgets.QWidget] = None,
+    ) -> None:
+        super().__init__(parent)
+        self.jobs = jobs
+        self.mikro = mikro
+        self.selected: Optional[ArrayDataset] = None
+        self.setWindowTitle("Open an image")
 
-        self.repList = QtWidgets.QListWidget()
+        self.label = QtWidgets.QLabel("Select the image you want to open")
+        self.search = QtWidgets.QLineEdit()
+        self.search.setPlaceholderText("Search by name")
+        self.search.returnPressed.connect(self.load)
+        self.list = QtWidgets.QListWidget()
+        self.list.currentItemChanged.connect(self.on_selected)
+        self.list.itemDoubleClicked.connect(lambda _: self.accept())
 
-        self.repquery = async_to_qt(aimages)
-        self.repquery.called.connect(lambda x: self.label.setText("Loading..."))
-        self.repquery.returned.connect(self.update_list)
-        self.repquery.errored.connect(print)
-
-        self.detailquery = async_to_qt(aget_image)
-        self.detailquery.called.connect(
-            lambda x: self.buttonBox.buttons()[0].setEnabled(False)
+        self.buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
         )
-        self.detailquery.errored.connect(lambda e: self.label.setText("Error loading"))
-        self.detailquery.returned.connect(self.on_image_loaded)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
 
-        self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.buttons()[0].setEnabled(False)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.search)
+        layout.addWidget(self.list)
+        layout.addWidget(self.buttons)
+        self.setLayout(layout)
 
-        self.layout = QtWidgets.QVBoxLayout()
+        self.load()
 
-        self.layout.addWidget(self.label)
-        self.layout.addWidget(self.repList)
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
+    def load(self) -> None:
+        self.label.setText("Loading...")
+        self.jobs.submit(
+            search, self.mikro(), self.search.text().strip(), done=self.on_loaded, failed=self.on_failed
+        )
 
-        self.fetch_images_task = self.repquery.run()
-        self.fetch_image_task = None
+    def on_loaded(self, datasets: tuple[ArrayDataset, ...]) -> None:
+        self.list.clear()
+        self.label.setText("Select the image you want to open" if datasets else "No image found")
+        for dataset in datasets:
+            item = QtWidgets.QListWidgetItem(describe(dataset))
+            item.setData(QtCore.Qt.UserRole, dataset)
+            self.list.addItem(item)
 
-    def on_image_loaded(self, rep: Image):
-        self.buttonBox.buttons()[0].setEnabled(True)
-        self.label.setText(f"Selected {rep.name} ")
-        self.selected_representation = rep
+    def on_failed(self, error: BaseException) -> None:
+        self.label.setText(f"Could not load the images: {error}")
 
-    def update_list(self, reps: Tuple[Image, ...]):
-        self.repList.clear()
-        self.label.setText("Select An image that you want to open")
-
-        for rep in reps:
-            item = QtWidgets.QListWidgetItem(f"{rep.name}")
-            item.__repid = rep.id
-            self.repList.addItem(item)
-
-        self.repList.itemClicked.connect(self.select_rep)
-
-    def select_rep(self, test):
-        if self.fetch_images_task and not self.fetch_images_task.done():
-            self.fetch_images_task.cancel(wait=True)
-
-        current_item = self.repList.currentItem().__repid
-        self.fetch_image_task = self.detailquery.run(current_item)
+    def on_selected(self, item: Optional[QtWidgets.QListWidgetItem], _: Any = None) -> None:
+        self.selected = item.data(QtCore.Qt.UserRole) if item is not None else None
+        self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(self.selected is not None)

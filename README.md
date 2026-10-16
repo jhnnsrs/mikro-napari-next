@@ -12,9 +12,22 @@ mikro napari enables napari on the mikro/arkitekt platform
 
 ## Idea
 
-This is a napari plugin, that provides a simple user interface to use napari with mikro you can view and annotate
-data on the mikro platform (synchronised between all of your napari instances) and use napari within arkitekt workflows
-(can be extended with other plugins)
+This is a napari plugin, that provides a simple user interface to use napari with mikro: you can view and annotate
+data on the mikro platform and use napari within arkitekt workflows (can be extended with other plugins).
+
+An image is shown as one layer per channel, at its pixel size if it is registered in a physical space. ROIs drawn on
+its shapes layer are stored as annotations. They are read when the image is opened and on "Refresh ROIs": other
+viewers' changes do not arrive on their own.
+
+The plugin offers these actions to arkitekt while its widget is open:
+
+| Action | What it does |
+|---|---|
+| Show on Napari | Shows an image, optionally with its ROIs |
+| Show Image | Shows an image |
+| Tile Images on Napari | Shows several images next to each other |
+| Upload Napari Layer | Stores the selected image layer as a dataset |
+| Stream ROIs | Shows an image and yields the ROIs the user marks on it |
 
 ## Install
 
@@ -47,9 +60,15 @@ If you want to contribute to this project, you can clone the repository and inst
 ```bash
 git clone
 cd mikro-napari
-poetry install --all-extras
+uv sync
 ```
 
-This will install the package in development mode and install all dependencies.
+This installs the package in development mode with all dependencies, and PyQt5 for the tests.
+
+The tests need no server and no login; they build the widget on a viewer without a window:
+
+```bash
+QT_QPA_PLATFORM=offscreen uv run pytest
+```
 
 
