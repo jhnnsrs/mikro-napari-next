@@ -1,7 +1,8 @@
 """The shapes layer that keeps the ROIs of one opened image."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 import napari
 import numpy as np
@@ -24,7 +25,7 @@ MINIMUM_VERTICES = {"polygon": 3}
 class _Row:
     """What is known of one shape of the layer."""
 
-    id: Optional[str] = None
+    id: str | None = None
     storing: bool = False
     dirty: bool = False
     gone: bool = False
@@ -48,7 +49,7 @@ class RoiLayer(QtCore.QObject):
         jobs: Any,
         mikro: Callable[[], Mikro],
         physical: bool = True,
-        parent: Optional[QtCore.QObject] = None,
+        parent: QtCore.QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self.viewer = viewer
@@ -154,7 +155,7 @@ class RoiLayer(QtCore.QObject):
             return
         self._settle.start()
 
-    def _drawing(self, row: _Row) -> Optional[annotations.Drawing]:
+    def _drawing(self, row: _Row) -> annotations.Drawing | None:
         index = self.rows.index(row)
         vertices = np.asarray(self.layer.data[index])
         shape_type = self.layer.shape_type[index]

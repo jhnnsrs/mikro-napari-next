@@ -1,6 +1,7 @@
 """Blocking calls, run off the Qt thread and answered in it."""
 
-from typing import Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 from koil import run_threaded
 from koil.qt import async_to_qt
@@ -16,8 +17,8 @@ class _Job(QtCore.QObject):
         self,
         function: Callable[..., Any],
         args: tuple[Any, ...],
-        done: Optional[Callable[[Any], None]],
-        failed: Optional[Callable[[BaseException], None]],
+        done: Callable[[Any], None] | None,
+        failed: Callable[[BaseException], None] | None,
         parent: QtCore.QObject,
     ) -> None:
         super().__init__(parent)
@@ -50,7 +51,7 @@ class Jobs(QtCore.QObject):
     callers. The run has to be entered: the threads are its koil loop's.
     """
 
-    def __init__(self, parent: Optional[QtCore.QObject] = None) -> None:
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
         self._running: set[_Job] = set()
 
@@ -58,8 +59,8 @@ class Jobs(QtCore.QObject):
         self,
         function: Callable[..., Any],
         *args: Any,  # noqa: ANN401
-        done: Optional[Callable[[Any], None]] = None,
-        failed: Optional[Callable[[BaseException], None]] = None,
+        done: Callable[[Any], None] | None = None,
+        failed: Callable[[BaseException], None] | None = None,
     ) -> None:
         """Call ``function(*args)`` off the Qt thread.
 

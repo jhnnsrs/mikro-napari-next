@@ -9,7 +9,7 @@ done when the layers are in the viewer, and a Qt future has to resolve to a valu
 """
 
 import logging
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from arkitekt import Runtime, connect
 from arkitekt.qt import QtApp
@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 app = QtApp(identifier, version, logo=logo, services=[mikro_service])
 
-_widget: Optional["MikroNapariWidget"] = None
-_runtime: Optional[Runtime[Any]] = None
-_koil: Optional[Koil] = None
+_widget: "MikroNapariWidget | None" = None
+_runtime: Runtime[Any] | None = None
+_koil: Koil | None = None
 
 
 def new_runtime() -> Runtime[Any]:
@@ -60,7 +60,7 @@ def release_runtime() -> None:
         koil.exit()
 
 
-def set_widget(widget: Optional["MikroNapariWidget"]) -> None:
+def set_widget(widget: "MikroNapariWidget | None") -> None:
     """Name the widget the actions act on."""
     global _widget
     _widget = widget

@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Optional, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import napari
 from arkitekt import Runtime
@@ -37,10 +38,10 @@ class MikroNapariWidget(QtWidgets.QWidget):
     def __init__(
         self,
         viewer: napari.Viewer,
-        runtime: Optional[Runtime[Any]] = None,
+        runtime: Runtime[Any] | None = None,
         jobs: Any = None,
-        mikro: Optional[Mikro] = None,
-        parent: Optional[QtWidgets.QWidget] = None,
+        mikro: Mikro | None = None,
+        parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.viewer = viewer
@@ -48,7 +49,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.jobs = jobs or Jobs(self)
         self._mikro = mikro
         self.rois: dict[str, RoiLayer] = {}
-        self.magic_bar: Optional[MagicBar] = None
+        self.magic_bar: MagicBar | None = None
 
         self.connecting = QtWidgets.QLabel()
         self.connecting.setWordWrap(True)
@@ -147,7 +148,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
     def show_image(
         self,
         source: Any,  # noqa: ANN401
-        future: Optional[QtFuture[ArrayLens]] = None,
+        future: QtFuture[ArrayLens] | None = None,
         with_rois: bool = True,
         physical: bool = True,
     ) -> None:
@@ -183,13 +184,13 @@ class MikroNapariWidget(QtWidgets.QWidget):
             self._fail(error, future)
 
     def add_plan(
-        self, plan: LayerPlan, physical: bool = True, offset: Optional[dict[str, float]] = None
+        self, plan: LayerPlan, physical: bool = True, offset: dict[str, float] | None = None
     ) -> list[Any]:
         """Add the layers of a plan to the viewer."""
         return [self._add_layer(plan, spec, physical, offset) for spec in plan.specs]
 
     def _add_layer(
-        self, plan: LayerPlan, spec: LayerSpec, physical: bool, offset: Optional[dict[str, float]]
+        self, plan: LayerPlan, spec: LayerSpec, physical: bool, offset: dict[str, float] | None
     ) -> Any:  # noqa: ANN401
         arguments = layers.layer_arguments(plan, spec, physical, offset)
         if spec.rgb is None:
@@ -216,7 +217,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
                 pass
         return self.viewer.add_image(data, **arguments)
 
-    def tile(self, images: Sequence[ArrayLens], future: Optional[QtFuture[list[ArrayLens]]] = None) -> None:
+    def tile(self, images: Sequence[ArrayLens], future: QtFuture[list[ArrayLens]] | None = None) -> None:
         """Show several images next to each other."""
 
         def prepare_all(mikro: Mikro, sources: Sequence[ArrayLens]) -> list[LayerPlan]:
@@ -252,7 +253,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
     # ROIs
     # ------------------------------------------------------------------ #
 
-    def rois_of(self, plan: LayerPlan, physical: bool = True) -> Optional[RoiLayer]:
+    def rois_of(self, plan: LayerPlan, physical: bool = True) -> RoiLayer | None:
         """The ROI layer of a shown image, opened if it is not; None if it has no grid to draw in."""
         if plan.coordinate_system is None:
             return None
@@ -264,7 +265,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
             self.rois[plan.coordinate_system] = rois
         return rois
 
-    def open_rois(self, plan: LayerPlan, physical: bool = True) -> Optional[RoiLayer]:
+    def open_rois(self, plan: LayerPlan, physical: bool = True) -> RoiLayer | None:
         """Open the ROI layer of a shown image and read its annotations."""
         rois = self.rois_of(plan, physical)
         if rois is not None:
@@ -285,7 +286,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
     def stream(self, image: ArrayLens, generator: QtGenerator[Annotation], existing: bool = False) -> None:
         """Show an image and hand over the ROIs the user marks on it, until told they are all marked."""
 
-        def opened(rois: Optional[RoiLayer]) -> None:
+        def opened(rois: RoiLayer | None) -> None:
             if rois is None:
                 generator.throw(RuntimeError("The image has no coordinate system to draw ROIs in."))
                 return
@@ -348,7 +349,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
                 return layer
         raise RuntimeError("Select an image layer that is not on the server yet.")
 
-    def upload(self, name: str = "", future: Optional[QtFuture[ArrayLens]] = None) -> None:
+    def upload(self, name: str = "", future: QtFuture[ArrayLens] | None = None) -> None:
         """Store the selected image layer as a dataset."""
         try:
             layer = self.uploadable_layer()

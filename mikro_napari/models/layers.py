@@ -6,7 +6,8 @@ belongs on a worker thread.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 
 import xarray as xr
 from mikro import Mikro

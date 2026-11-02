@@ -1,4 +1,5 @@
-from typing import Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 from mikro import Mikro
 from mikro.api.schema import ArrayDataset, ArrayDatasetFilter, OffsetPaginationInput
@@ -28,12 +29,12 @@ class OpenImageDialog(QtWidgets.QDialog):
         self,
         jobs: Any,
         mikro: Callable[[], Mikro],
-        parent: Optional[QtWidgets.QWidget] = None,
+        parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.jobs = jobs
         self.mikro = mikro
-        self.selected: Optional[ArrayDataset] = None
+        self.selected: ArrayDataset | None = None
         self.setWindowTitle("Open an image")
 
         self.label = QtWidgets.QLabel("Select the image you want to open")
@@ -77,6 +78,6 @@ class OpenImageDialog(QtWidgets.QDialog):
     def on_failed(self, error: BaseException) -> None:
         self.label.setText(f"Could not load the images: {error}")
 
-    def on_selected(self, item: Optional[QtWidgets.QListWidgetItem], _: Any = None) -> None:
+    def on_selected(self, item: QtWidgets.QListWidgetItem | None, _: Any = None) -> None:
         self.selected = item.data(QtCore.Qt.UserRole) if item is not None else None
         self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(self.selected is not None)

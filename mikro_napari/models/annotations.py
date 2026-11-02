@@ -10,7 +10,8 @@ the server and block.
 
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 from mikro import Mikro
