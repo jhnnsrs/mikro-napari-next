@@ -1,6 +1,6 @@
 [project]
 name = "mikro-napari"
-version = "0.1.63"
+version = "0.2.0"
 description = "A napari plugin to interact with and provide functionality for a connected arkitekt server"
 readme = "README.md"
 authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
@@ -105,3 +105,8 @@ markers = [
     "integration: marks tests that require a running server",
     "qt: marks tests that require a running qt application",
 ]
+
+[tool.uv]
+# pyqt5-qt5 stopped shipping Windows wheels after 5.15.2 (5.15.17+ are macOS and
+# Linux only), so a universal lock picks a release Windows cannot install.
+constraint-dependencies = ["pyqt5-qt5==5.15.2; sys_platform == 'win32'"]
