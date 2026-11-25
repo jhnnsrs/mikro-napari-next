@@ -15,7 +15,7 @@ from arkitekt import Runtime, connect
 from arkitekt.qt import QtApp
 from koil import Koil, unkoil
 from koil.qt import QtFuture, QtGenerator
-from mikro import mikro_service
+from mikro import Mikro
 from mikro.api.schema import Annotation, ArrayLens
 
 from .manifest import identifier, logo, version
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-app = QtApp(identifier, version, logo=logo, services=[mikro_service])
+app = QtApp(identifier, version, logo=logo, clients=[Mikro])
 
 _widget: "MikroNapariWidget | None" = None
 _runtime: Runtime[Any] | None = None

@@ -9,11 +9,11 @@ classifiers = ["Framework :: napari"]
 requires-python = ">=3.11"
 dependencies = [
     # rekuest serves the actions the plugin offers; since arkitekt 7 it is an extra.
-    "arkitekt[qt,rekuest]>=6.1",
+    "arkitekt[qt,rekuest]>=19",
     # 2D ROIs (two-component vertices) need the mikro release after 7.0.0, and
     # "Stream ROIs" the koil release after 3.3.6 (a Qt generator that yields more
     # than once). Raise the floors to those releases once they are out.
-    "mikro>=7.0",
+    "mikro>=15",
     "koil>=3.3.6",
     "xarray>=2024.11.0",
     "numpy>=1.26",

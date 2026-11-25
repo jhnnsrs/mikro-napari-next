@@ -10,7 +10,7 @@ napari = pytest.importorskip("napari")
 
 from arkitekt import connect  # noqa: E402
 from arkitekt.qt import QtApp  # noqa: E402
-from mikro import mikro_service  # noqa: E402
+from mikro import Mikro  # noqa: E402
 from mikro.api.schema import AnnotationKind  # noqa: E402
 from napari.components import ViewerModel  # noqa: E402
 
@@ -54,7 +54,7 @@ def widget(qapp, server):
     """The widget on a viewer without a window, over a run that is never entered."""
     # The plugin's own app has a logo, which the bar fetches as it is built: that
     # needs an entered run. The bar is not what is tested here.
-    runtime = connect(QtApp("mikro-napari-test", services=[mikro_service]), provide=True)
+    runtime = connect(QtApp("mikro-napari-test", clients=[Mikro]), provide=True)
     built = MikroNapariWidget(ViewerModel(), runtime=runtime, jobs=InlineJobs(), mikro=server)
     yield built
     global_app.set_widget(None)
