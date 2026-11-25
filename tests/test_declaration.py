@@ -18,7 +18,7 @@ def test_the_app_offers_its_five_actions_over_mikro(qapp) -> None:
 
     snapshot = global_app.app.snapshot()
 
-    assert list(snapshot.services) == ["mikro"]
+    assert list(snapshot.clients) == ["mikro"]
     offered = {
         interface: implementation.definition
         for interface, implementation in snapshot.registry.implementations.items()
